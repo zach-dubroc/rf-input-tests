@@ -1,6 +1,4 @@
 import React, { useState } from "react";
-import Image from "../assets/image.png";
-import Logo from "../assets/logo.png";
 import { FaEye, FaEyeSlash } from "react-icons/fa6";
 import { Link } from "react-router-dom";
 
@@ -11,6 +9,8 @@ const Register = () => {
     email: "",
     password: "",
     company_name: "",
+    company_address: "",
+    company_phone: "",
     industry: "",
   });
 
@@ -23,7 +23,6 @@ const Register = () => {
       ...formData,
       [e.target.name]: e.target.value,
     });
-    console.log(formData);
   };
 
   const handleSubmit = async (e) => {
@@ -64,9 +63,7 @@ const Register = () => {
           <div className="register-center">
             <h2>Register</h2>
             <p>Fill in the details to create your account</p>
-            <p className="login-bottom-p">
-              Already have an account? <Link to="/">Log in</Link>
-            </p>
+
             <form onSubmit={handleSubmit}>
               <input
                 type="text"
@@ -98,6 +95,20 @@ const Register = () => {
               />
               <input
                 type="text"
+                name="company_address"
+                placeholder="Company Address"
+                value={formData.company_address}
+                onChange={handleChange}
+              />
+              <input
+                type="text"
+                name="company_phone"
+                placeholder="Company Phone"
+                value={formData.company_phone}
+                onChange={handleChange}
+              />
+              <input
+                type="text"
                 name="industry"
                 placeholder="Industry"
                 value={formData.industry}
@@ -122,6 +133,9 @@ const Register = () => {
                   {loading ? "Registering..." : "Register"}
                 </button>
               </div>
+              <p className="login-bottom-p">
+                Already have an account? <Link to="/">Log in</Link>
+              </p>
             </form>
           </div>
           {message && <p className="register-message">{message}</p>}
