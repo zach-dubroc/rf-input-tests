@@ -6,8 +6,9 @@ const QueryForm = () => {
     industry: "",
     location: "",
   });
+
   const [useMyLocation, setUseMyLocation] = useState(false);
-  const [response, setResponse] = useState(null);
+  const [scrapedLeads, setScrapedLeads] = useState(null); // Scraped lead data
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -58,23 +59,36 @@ const QueryForm = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setResponse(null);
+    setScrapedLeads(null);
 
     try {
-      const res = await fetch("http://127.0.0.1:5000/url_query/query", {
+      const urlResponse = await fetch("http://127.0.0.1:5000/url_query/query", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(queryData),
       });
 
-      const result = await res.json();
-      if (res.ok) {
-        setResponse(result);
+      const urlResult = await urlResponse.json();
+      if (!urlResponse.ok) {
+        throw new Error(urlResult.error || "Failed to fetch URLs.");
+      }
+
+      const urls = urlResult.urls;
+
+      const scrapeResponse = await fetch("http://127.0.0.1:5000/scrape/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ urls }),
+      });
+
+      const scrapeResult = await scrapeResponse.json();
+      if (scrapeResponse.ok) {
+        setScrapedLeads(scrapeResult.leads);
       } else {
-        setError(result.error || "Something went wrong.");
+        throw new Error(scrapeResult.error || "Failed to scrape leads.");
       }
     } catch (err) {
-      setError("Failed to connect to the server.");
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -82,8 +96,7 @@ const QueryForm = () => {
 
   return (
     <div className="query-form-container">
-      <h2>First, what sort of leads are you looking for?</h2>
-      <br></br>
+      <h2>Find Leads</h2>
       <form onSubmit={handleSubmit}>
         <div>
           <label htmlFor="keywords">Keywords:</label>
@@ -136,14 +149,27 @@ const QueryForm = () => {
           </div>
         </div>
         <button type="submit" disabled={loading}>
-          {loading ? "Loading..." : "Search"}
+          {loading ? "Fetching and Scraping..." : "Search and Scrape"}
         </button>
       </form>
-      {response && (
-        <div className="response-container">
-          <h3>Results:</h3>
-          <pre>{JSON.stringify(response, null, 2)}</pre>
+      {scrapedLeads && scrapedLeads.length > 0 ? (
+        <div className="scraped-leads-container">
+          <h3>Scraped Leads:</h3>
+          <ul>
+            {scrapedLeads.map((lead, index) => (
+              <li key={index}>
+                <strong>URL:</strong> {lead.url}
+                <br />
+                <strong>Phone Numbers:</strong>{" "}
+                {lead.phone_numbers.length > 0
+                  ? lead.phone_numbers.join(", ")
+                  : "No phone numbers found"}
+              </li>
+            ))}
+          </ul>
         </div>
+      ) : (
+        <p>...</p>
       )}
       {error && <p className="error-message">{error}</p>}
     </div>
