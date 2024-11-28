@@ -75,18 +75,18 @@ const QueryForm = () => {
 
       const urls = urlResult.urls;
 
-      // const scrapeResponse = await fetch("http://127.0.0.1:5000/scrape/leads", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({ urls }),
-      // });
+      const scrapeResponse = await fetch("http://127.0.0.1:5000/scrape/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ urls }),
+      });
 
-      // const scrapeResult = await scrapeResponse.json();
-      // if (scrapeResponse.ok) {
-      //   setScrapedLeads(scrapeResult.leads);
-      // } else {
-      //   throw new Error(scrapeResult.error || "Failed to scrape leads.");
-      // }
+      const scrapeResult = await scrapeResponse.json();
+      if (scrapeResponse.ok) {
+        setScrapedLeads(scrapeResult.leads);
+      } else {
+        throw new Error(scrapeResult.error || "Failed to scrape leads.");
+      }
     } catch (err) {
       setError(err.message);
     } finally {
