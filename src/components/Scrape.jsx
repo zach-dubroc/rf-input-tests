@@ -1,66 +1,21 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 
-const Scrape = () => {
-  const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchScrapedData = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch("http://127.0.0.1:5000/scrape/leads", {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
-
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.detail || "Failed to fetch scraped data.");
-        }
-
-        setResults(data.scraped_data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchScrapedData();
-  }, []);
-
-  if (loading) {
-    return <p>Loading scraped results...</p>;
-  }
-
-  if (error) {
-    return <p className="error-message">Error: {error}</p>;
-  }
-
-  if (!results || results.length === 0) {
-    return <p>No results available.</p>;
-  }
+const Scrape = ({ results }) => {
+  if (!results || results.length === 0) return <p>no results available.</p>;
 
   return (
     <div>
-      <h2>Scraped Results</h2>
+      <h2>business details</h2>
       <ul>
         {results.map((result, index) => (
           <li key={index}>
-            <strong>URL:</strong> {result.url}
+            <strong>name:</strong> {result.name || "n/a"}
             <br />
-            <strong>Phone Numbers:</strong>{" "}
-            {Array.isArray(result.phone_numbers)
-              ? result.phone_numbers.join(", ")
-              : "N/A"}
+            <strong>address:</strong> {result.address || "n/a"}
             <br />
-            <strong>Emails:</strong>{" "}
-            {Array.isArray(result.emails) ? result.emails.join(", ") : "N/A"}
+            <strong>phone:</strong> {result.phone_number || "n/a"}
             <br />
-            <strong>Company Name:</strong> {result.company_name || "N/A"}
+            <strong>website:</strong> {result.website || "n/a"}
           </li>
         ))}
       </ul>

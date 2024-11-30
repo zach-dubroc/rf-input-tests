@@ -7,10 +7,9 @@ const QueryForm = () => {
     industry: "",
     location: "",
   });
-
-  const [useMyLocation, setUseMyLocation] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState([]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -20,59 +19,51 @@ const QueryForm = () => {
     }));
   };
 
-  const handleUseMyLocation = async () => {
-    if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser.");
-      return;
-    }
-
-    setUseMyLocation(true);
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-
-        try {
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
-          );
-          const data = await response.json();
-          const city =
-            data.address.city || data.address.town || data.address.state || "";
-          setQueryData((prev) => ({
-            ...prev,
-            location: city,
-          }));
-        } catch (error) {
-          alert("Could not fetch your location.");
-          setUseMyLocation(false);
-        }
-      },
-      () => {
-        alert("Unable to retrieve location.");
-        setUseMyLocation(false);
-      }
-    );
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleQuery = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch("http://127.0.0.1:5000/query/url_query", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(queryData),
-      });
+      const response = await fetch(
+        "http://127.0.0.1:5000/query/post-business-detail",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(queryData),
+        }
+      );
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.detail || "Failed to process query.");
+        throw new Error(data.detail || "failed to submit query.");
+      }
+      alert("query submitted successfully.");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchResults = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:5000/query/get-business-detail",
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || "failed to fetch results.");
       }
 
-      alert("Query submitted successfully. Scraping has started.");
+      setResults(data.businesses || []);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -82,66 +73,64 @@ const QueryForm = () => {
 
   return (
     <div className="query-form-container">
-      <h2>Find Leads</h2>
-      <form onSubmit={handleSubmit}>
+      <h2>-leadgen input testing-</h2>
+      <h3>contact info and urls only pulled from google places api</h3>
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleQuery();
+        }}
+      >
         <div>
-          <label htmlFor="keywords">Keywords:</label>
+          <label htmlFor="keywords">keywords:</label>
           <input
             type="text"
             id="keywords"
             name="keywords"
-            placeholder="e.g., SaaS companies"
+            placeholder="e.g., saas companies"
             value={queryData.keywords}
             onChange={handleChange}
             required
           />
         </div>
         <div>
-          <label htmlFor="industry">Industry:</label>
+          <label htmlFor="industry">industry:</label>
           <input
             type="text"
             id="industry"
             name="industry"
-            placeholder="e.g., Software"
+            placeholder="e.g., software"
             value={queryData.industry}
             onChange={handleChange}
           />
         </div>
         <div>
-          <label htmlFor="location">Location:</label>
-          <div className="location-input">
-            <input
-              type="text"
-              id="location"
-              name="location"
-              placeholder="e.g., San Francisco"
-              value={queryData.location}
-              onChange={handleChange}
-              disabled={useMyLocation}
-            />
-            <div className="loc-checkbox">
-              <input
-                type="checkbox"
-                id="use-my-location"
-                checked={useMyLocation}
-                onChange={(e) =>
-                  e.target.checked
-                    ? handleUseMyLocation()
-                    : setUseMyLocation(false)
-                }
-              />
-              <label htmlFor="use-my-location">Use My Location</label>
-            </div>
-          </div>
+          <label htmlFor="location">location:</label>
+          <input
+            type="text"
+            id="location"
+            name="location"
+            placeholder="e.g., san francisco"
+            value={queryData.location}
+            onChange={handleChange}
+            required
+          />
         </div>
         <button type="submit" disabled={loading}>
-          {loading ? "Fetching and Scraping..." : "Search and Scrape"}
+          {loading ? "submitting..." : "submit"}
+        </button>
+        <button
+          type="button"
+          onClick={fetchResults}
+          disabled={loading}
+          style={{ marginLeft: "10px" }}
+        >
+          {loading ? "fetching..." : "fetch results"}
         </button>
       </form>
-
       {error && <p className="error-message">{error}</p>}
-
-      <Scrape />
+      <Scrape results={results} />
     </div>
   );
 };
