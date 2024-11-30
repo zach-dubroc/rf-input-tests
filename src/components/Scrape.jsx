@@ -1,19 +1,26 @@
-const ScrapedResults = () => {
+import React, { useEffect, useState } from "react";
+
+const Scrape = () => {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchResults = async () => {
+    const fetchScrapedData = async () => {
       setLoading(true);
+      setError(null);
+
       try {
-        const response = await fetch(
-          "http://127.0.0.1:5000/scrape/scrape/leads"
-        );
+        const response = await fetch("http://127.0.0.1:5000/scrape/leads", {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+
         const data = await response.json();
         if (!response.ok) {
           throw new Error(data.detail || "Failed to fetch scraped data.");
         }
+
         setResults(data.scraped_data);
       } catch (err) {
         setError(err.message);
@@ -22,11 +29,20 @@ const ScrapedResults = () => {
       }
     };
 
-    fetchResults();
+    fetchScrapedData();
   }, []);
 
-  if (loading) return <p>Loading scraped results...</p>;
-  if (error) return <p>Error: {error}</p>;
+  if (loading) {
+    return <p>Loading scraped results...</p>;
+  }
+
+  if (error) {
+    return <p className="error-message">Error: {error}</p>;
+  }
+
+  if (!results || results.length === 0) {
+    return <p>No results available.</p>;
+  }
 
   return (
     <div>
@@ -37,12 +53,14 @@ const ScrapedResults = () => {
             <strong>URL:</strong> {result.url}
             <br />
             <strong>Phone Numbers:</strong>{" "}
-            {result.phone_numbers ? result.phone_numbers.join(", ") : "N/A"}
+            {Array.isArray(result.phone_numbers)
+              ? result.phone_numbers.join(", ")
+              : "N/A"}
             <br />
             <strong>Emails:</strong>{" "}
-            {result.emails ? result.emails.join(", ") : "N/A"}
+            {Array.isArray(result.emails) ? result.emails.join(", ") : "N/A"}
             <br />
-            <strong>Company Name:</strong> {result.company_name}
+            <strong>Company Name:</strong> {result.company_name || "N/A"}
           </li>
         ))}
       </ul>
@@ -50,4 +68,4 @@ const ScrapedResults = () => {
   );
 };
 
-export default ScrapedResults;
+export default Scrape;

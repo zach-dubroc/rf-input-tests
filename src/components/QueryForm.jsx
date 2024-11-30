@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Scrape from "./Scrape";
 
 const QueryForm = () => {
   const [queryData, setQueryData] = useState({
@@ -8,7 +9,6 @@ const QueryForm = () => {
   });
 
   const [useMyLocation, setUseMyLocation] = useState(false);
-  const [scrapedLeads, setScrapedLeads] = useState(null); // Scraped lead data
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -59,34 +59,20 @@ const QueryForm = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setScrapedLeads(null);
 
     try {
-      const urlResponse = await fetch("http://127.0.0.1:5000/url_query/query", {
+      const response = await fetch("http://127.0.0.1:5000/query/url_query", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(queryData),
       });
 
-      const urlResult = await urlResponse.json();
-      if (!urlResponse.ok) {
-        throw new Error(urlResult.error || "Failed to fetch URLs.");
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || "Failed to process query.");
       }
 
-      const urls = urlResult.urls;
-
-      const scrapeResponse = await fetch("http://127.0.0.1:5000/scrape/leads", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ urls }),
-      });
-
-      const scrapeResult = await scrapeResponse.json();
-      if (scrapeResponse.ok) {
-        setScrapedLeads(scrapeResult.leads);
-      } else {
-        throw new Error(scrapeResult.error || "Failed to scrape leads.");
-      }
+      alert("Query submitted successfully. Scraping has started.");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -152,26 +138,10 @@ const QueryForm = () => {
           {loading ? "Fetching and Scraping..." : "Search and Scrape"}
         </button>
       </form>
-      {scrapedLeads && scrapedLeads.length > 0 ? (
-        <div className="scraped-leads-container">
-          <h3>Scraped Leads:</h3>
-          <ul>
-            {scrapedLeads.map((lead, index) => (
-              <li key={index}>
-                <strong>URL:</strong> {lead.url}
-                <br />
-                <strong>Phone Numbers:</strong>{" "}
-                {lead.phone_numbers.length > 0
-                  ? lead.phone_numbers.join(", ")
-                  : "No phone numbers found"}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : (
-        <p>...</p>
-      )}
+
       {error && <p className="error-message">{error}</p>}
+
+      <Scrape />
     </div>
   );
 };
