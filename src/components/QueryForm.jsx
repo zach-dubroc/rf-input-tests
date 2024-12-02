@@ -50,8 +50,11 @@ const QueryForm = () => {
     setError(null);
 
     try {
+      const params = new URLSearchParams({
+        location: queryData.location,
+      });
       const response = await fetch(
-        "http://127.0.0.1:5000/query/get-business-detail",
+        `http://127.0.0.1:5000/query/get-business-detail?${params.toString()}`,
         {
           method: "GET",
           headers: { "Content-Type": "application/json" },
@@ -75,7 +78,6 @@ const QueryForm = () => {
     <div className="query-form-container">
       <h2>-leadgen input testing-</h2>
       <h3>contact info and urls only pulled from google places api</h3>
-
       <form
         onSubmit={(e) => {
           e.preventDefault();
